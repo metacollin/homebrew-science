@@ -29,6 +29,7 @@ class Kicad < Formula
   depends_on "python" => :optional
   depends_on "swig" => :build if build.with? "python"
   depends_on "xz"
+  depends_on "glm"
 
   fails_with :gcc
   fails_with :llvm
@@ -52,7 +53,7 @@ class Kicad < Formula
   end
 
   def install
-    ENV["MAC_OS_X_VERSION_MIN_REQUIRED"] = "#{MacOS.version}"
+    ENV["MAC_OS_X_VERSION_MIN_REQUIRED"] = MacOS.version.to_s
     ENV.append "ARCHFLAGS", "-Wunused-command-line-argument-hard-error-in-future"
     ENV.append "LDFLAGS", "-headerpad_max_install_names"
     if MacOS.version < :mavericks
@@ -68,7 +69,7 @@ class Kicad < Formula
     end
 
     resource("wxk").stage do
-      (Pathname.pwd).install resource("wxpatch")
+      Pathname.pwd.install resource("wxpatch")
       safe_system "/usr/bin/patch", "-g", "0", "-f", "-d", Pathname.pwd, "-p1", "-i", "wxp.patch"
 
       mkdir "wx-build" do
@@ -93,7 +94,7 @@ class Kicad < Formula
         ]
 
         system "../configure", *args
-        system "make", "-j#{ENV.make_jobs}"
+        system "make", "-j4"
         system "make", "install"
       end
 
@@ -153,7 +154,7 @@ class Kicad < Formula
       end
 
       system "cmake", "../", *(std_cmake_args + args)
-      system "make", "-j#{ENV.make_jobs}"
+      system "make", "-j4"
       system "make", "install"
     end
   end
@@ -172,9 +173,7 @@ class Kicad < Formula
   end
 
   def caveats
-    s = ""
-    if build.with? "default-paths"
-      s += <<-EOS.undent
+    if build.with? "default-paths" then <<-EOS.undent
 
       KiCad component libraries and preferences are located in:
         #{kicaddir}
@@ -184,8 +183,7 @@ class Kicad < Formula
       within Pcbnew.  It will automatically guide you
       through this process upon first lauch.
       EOS
-    else
-      s += <<-EOS.undent
+    else <<-EOS.undent
 
       KiCad component libraries must be installed manually in:
         /Library/Application Support/kicad
@@ -195,8 +193,6 @@ class Kicad < Formula
           /Library/Application\ Support/kicad
       EOS
     end
-
-    s
   end
 
   test do
